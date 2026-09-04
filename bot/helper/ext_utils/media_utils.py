@@ -15,7 +15,7 @@ from asyncio import (
 )
 from asyncio.subprocess import PIPE
 from os import path as ospath
-from re import search as re_search, escape
+from re import search as re_search, escape, compile as re_compile
 from time import time
 from aioshutil import rmtree
 from langcodes import Language
@@ -27,6 +27,14 @@ from ...core.config_manager import BinConfig
 from .bot_utils import cmd_exec, sync_to_async
 from .files_utils import get_mime_type, is_archive, is_archive_split
 from .status_utils import time_to_seconds
+
+
+SPLIT_VIDEO_RE = re_compile(
+    r"(?i)\.(mkv|mp4|webm|avi|flv|wmv|mov|m4v|ts|m2ts)\.0*\d+$"
+)
+
+def is_split_video(path):
+    return bool(SPLIT_VIDEO_RE.search(path))
 
 
 def get_md5_hash(up_path):
@@ -188,6 +196,10 @@ async def get_media_info(path, extra_info=False):
 
 async def get_document_type(path):
     is_video, is_audio, is_image = False, False, False
+
+    if is_split_video(path):
+        return True, False, False
+
     if (
         is_archive(path)
         or is_archive_split(path)
