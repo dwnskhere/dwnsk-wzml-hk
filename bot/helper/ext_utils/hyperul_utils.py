@@ -180,14 +180,22 @@ class HypertgUpload(HypertgTransfer):
                     user_session=user_session,
                 )
 
-            LOGGER.info(f"HypertgUL uploaded {self._up_file}")
+            transport = "hyper" if use_hyper else "direct"
+            LOGGER.info(
+                f"Upload decision: file={self._up_file}, "
+                f"type={key}, "
+                f"is_video={is_video}, "
+                f"as_doc={self._listener.as_doc}, "
+                f"transport={transport}"
+            )
+            LOGGER.info(f"Uploaded {self._up_file} (type={key}, transport={transport})")
             return sent
 
         except StopTransmission:
-            LOGGER.warning(f"HypertgUL cancelled {self._up_file}")
+            LOGGER.warning(f"Upload cancelled {self._up_file}")
             raise
         except Exception as e:
-            LOGGER.error(f"HypertgUL fail {self._up_file}: {type(e).__name__}: {e}")
+            LOGGER.error(f"Upload fail {self._up_file}: {type(e).__name__}: {e}")
             raise
         finally:
             if user_thumb is None and thumb is not None and await aiopath.exists(thumb):
