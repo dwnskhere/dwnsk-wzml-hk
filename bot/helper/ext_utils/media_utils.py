@@ -1,4 +1,5 @@
 import re
+from uuid import uuid4
 from ast import literal_eval
 from contextlib import suppress
 from PIL import Image
@@ -76,6 +77,15 @@ async def download_image_thumb(url):
     path = f"{DOWNLOAD_DIR}thumbnails"
     await makedirs(path, exist_ok=True)
 
+    tag = sha256(url.encode()).hexdigest()[:12]
+    output = ospath.join(path, f"{tag}.jpg")
+    if await aiopath.isfile(output):
+        try:
+            if (await aiopath.getsize(output)) > 0:
+                return output
+        except Exception:
+            pass
+
     try:
         async with AsyncSession(timeout=30) as client:
             try:
@@ -97,9 +107,7 @@ async def download_image_thumb(url):
         LOGGER.error(f"Error downloading thumb from URL: {e}")
         return ""
 
-    tag = sha256(url.encode()).hexdigest()[:12]
-    tmp_path = ospath.join(path, f"{tag}_tmp")
-    output = ospath.join(path, f"{tag}.jpg")
+    tmp_path = ospath.join(path, f"{tag}_{uuid4().hex[:6]}_tmp")
 
     try:
         async with aiopen(tmp_path, "wb") as f:
